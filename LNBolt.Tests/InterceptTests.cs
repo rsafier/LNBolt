@@ -57,7 +57,7 @@ namespace LNBolt.Tests
             x.PrintDump();
             //await decoder.Decode();
             //decoder.PrintDump();
-            if (x.hopPayload.PaymentData != null || !x.hopPayload.OtherTLVs.Any(x => x.Type == 5482373484))
+            if (!x.hopPayload.OtherTLVs.Any(x => x.Type == 5482373484))
             {
                 return new ForwardHtlcInterceptResponse
                 {
