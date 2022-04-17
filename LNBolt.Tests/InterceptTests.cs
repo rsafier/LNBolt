@@ -16,8 +16,8 @@ namespace LNBolt.Tests
 {
     public class InterceptTests
     {
-        private LNDNodeConnection Carol;
-        private LNDNodeConnection Alice;
+        private LNDNodeConnection? Carol;
+        private LNDNodeConnection? Alice;
 
         [SetUp]
         public void Setup()
@@ -59,11 +59,32 @@ namespace LNBolt.Tests
             //decoder.PrintDump();
             if (!x.hopPayload.OtherTLVs.Any(x => x.Type == 5482373484))
             {
-                return new ForwardHtlcInterceptResponse
+                var aliceInvoices = await Alice.ListInvoices(new Lnrpc.ListInvoiceRequest { PendingOnly = true});
+                foreach(var i in aliceInvoices.Invoices)
                 {
-                    Action = ResolveHoldForwardAction.Resume,
-                    IncomingCircuitKey = data.IncomingCircuitKey,
-                };
+                    Debug.Print(i.PaymentAddr.ToByteArray().ToHex());
+                }
+                var invoice = aliceInvoices.Invoices.FirstOrDefault(xx => xx.PaymentAddr.ToByteArray().ToHex() == x.hopPayload.PaymentData.PaymentSecret.ToHex());
+                if (invoice == null)
+                {
+                    return new ForwardHtlcInterceptResponse
+                    {
+                        Action = ResolveHoldForwardAction.Resume,
+                        IncomingCircuitKey = data.IncomingCircuitKey,
+                    };
+                }
+                else
+                {
+                    var secret = invoice.RPreimage.ToByteArray();
+                    return new ForwardHtlcInterceptResponse
+                    {
+                        Action = ResolveHoldForwardAction.Settle,
+                        IncomingCircuitKey = data.IncomingCircuitKey,
+                        Preimage = Google.Protobuf.ByteString.CopyFrom(secret)
+                    };
+                }
+                    
+                
             }
             else
             {
