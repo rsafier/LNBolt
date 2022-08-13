@@ -8,6 +8,7 @@ namespace LNBolt.Tests
 {
     public class LNToolsTests
     {
+
         //private LNDNodeConnection Alice;
 
         [SetUp]
@@ -20,6 +21,18 @@ namespace LNBolt.Tests
             //    GrpcEndpoint = $"https://10.21.4.102:10009",
             //});
         }
+
+        [Test]
+        public void SCIDToLNDChannelId()
+        {
+            const ulong ChanId = 771399766003482624;
+            const string ScidString = "701584x2165x0";
+            decimal lnd = LNTools.SCIDToLNDChannelId(ScidString);
+            var cln = LNTools.LNDChannelIdToSCID(ChanId);
+            Assert.That(ChanId == lnd);
+            Assert.That(ScidString ==LNTools.SCIDToString(cln));
+        }
+
         [Test]
         public void HMACTest()
         {

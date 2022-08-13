@@ -13,6 +13,8 @@ using System.Security.Cryptography;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.IO;
+using ServiceStack;
+using ServiceStack.Text;
 
 namespace LNBolt
 {
@@ -135,6 +137,44 @@ namespace LNBolt
         public static byte[] GenerateUmKey(byte[] sharedSecret)
         {
             return CalculateHMAC(Um, sharedSecret);
+        }
+
+        /// <summary>
+        /// Changes scid (Short Channel ID) format (CLN) to Long (LND) channel ID formatting
+        /// </summary>
+        /// <param name="scidString"></param>
+        /// <returns></returns>
+        public static decimal SCIDToLNDChannelId(string scidString)
+        {
+            var s = scidString.Split(new string[] { "x", ":" }, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                .Select(x => Convert.ToUInt64(x))
+                .ToList();
+            return (s[0] << 40) | (s[1] << 16) | s[2];
+        }
+
+        /// <summary>
+        /// Changes Long (LND) channel ID formatting to scid (Short Channel ID) format (CLN) 
+        /// </summary>
+        /// <param name="scidString"></param>
+        /// <returns></returns>
+        public static ShortChannelId LNDChannelIdToSCID(UInt64 chanId)
+        {
+            var block = chanId >> 40;
+            var tx = chanId >> 16 & 0xFFFFFF;
+            var output = chanId & 0xFFFF;
+            return new ShortChannelId { Block = (uint)block, Tx = (uint)tx, Output = (ushort)output };
+        }
+
+        public static string SCIDToString(ShortChannelId scid, char seperatorChar = 'x')
+        {
+            return $"{scid.Block}{seperatorChar}{scid.Tx}{seperatorChar}{scid.Output}";
+        }
+
+        public struct ShortChannelId
+        {
+            public uint Block;
+            public uint Tx;
+            public ushort Output;
         }
     }
 }
